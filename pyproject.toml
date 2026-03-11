@@ -1,0 +1,21 @@
+[project]
+name = "py-llm"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "google-genai==1.12.1",
+    "python-dotenv==1.1.0",
+]
+
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "basic"
+
+[dependency-groups]
+dev = [
+    "argparse>=1.4.0",
+    "pyright>=1.1.408",
+]
