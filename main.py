@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
-from functions.call_function import available_functions
+from functions.call_function import available_functions, call_function
 from prompts import system_prompt
 
 
@@ -28,6 +28,7 @@ def main():
 
     client = genai.Client(api_key=api_key)
     response = client.models.generate_content(
+        # model="gemini-1.5-flash-002",
         model="gemini-2.5-flash",
         contents=messages,
         config=types.GenerateContentConfig(
@@ -44,8 +45,29 @@ def main():
 
     print("Response:")
     if response.function_calls:
+        function_results = []
+
         for function_call in response.function_calls:
-            print(f"Calling function: {function_call.name}({function_call.args})")
+            # 1. Ejecutar la función
+            function_call_result = call_function(function_call, verbose=args.verbose)
+
+            # 2. Validaciones de seguridad de la estructura
+            if not function_call_result.parts:
+                raise RuntimeError("Function call result has no parts")
+
+            part = function_call_result.parts[0]
+            if not part.function_response:
+                raise RuntimeError("Part does not contain a function_response")
+
+            if part.function_response.response is None:
+                raise RuntimeError("FunctionResponse.response is None")
+
+            # 3. Guardar el resultado
+            function_results.append(part)
+
+            # 4. Feedback visual si es verbose
+            if args.verbose:
+                print(f"-> {part.function_response.response}")
     else:
         print(response.text)
 
