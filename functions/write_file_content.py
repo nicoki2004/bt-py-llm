@@ -4,6 +4,27 @@ THis module write a content to a file
 
 import os
 
+from google.genai import types
+
+schema_write_file = types.FunctionDeclaration(
+    name="write_file",
+    description="Writes content to a specified file path. If the file exists, it will be overwritten. If the parent directories do not exist, they will be created automatically.",
+    parameters=types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "file_path": types.Schema(
+                type=types.Type.STRING,
+                description="The relative path of the file to write to (e.g., 'script.py' or 'data/results.txt').",
+            ),
+            "content": types.Schema(
+                type=types.Type.STRING,
+                description="The full text content to be written to the file.",
+            ),
+        },
+        required=["file_path", "content"],
+    ),
+)
+
 
 def write_file(working_directory, file_path, content):
     try:
