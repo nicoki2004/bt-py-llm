@@ -1,3 +1,9 @@
+"""
+This module get the file info from
+a working directorty and a directory.
+default directory=.
+"""
+
 import os
 
 

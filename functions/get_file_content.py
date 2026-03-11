@@ -1,3 +1,8 @@
+"""
+THis module get a file content from
+a working directory and a file_path
+"""
+
 import os
 
 from config import MAX_CHARS
