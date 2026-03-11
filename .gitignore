@@ -1,13 +1,30 @@
-# Python-generated files
+# --- Python & Build ---
 __pycache__/
 *.py[oc]
 build/
 dist/
 wheels/
-*.egg-info
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
 
-# Virtual environments
-.venv
-
+# --- Environments & Config ---
+.venv/
 .env
+# Ignorar archivos locales de configuración de python si existen
+.python-version
 
+# --- UV (Package Manager) ---
+.uv/
+
+# --- Operating System ---
+.DS_Store
+Thumbs.db
+
+# --- AI Agent Sandbox ---
+# Si quieres que los archivos creados por el agente NO se suban a git, 
+# puedes descomentar la siguiente línea:
+# calculator/generated_* # --- IDEs ---
+.vscode/
+.idea/
