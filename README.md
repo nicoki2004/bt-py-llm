@@ -29,22 +29,6 @@ Este proyecto es un agente de IA construido con el SDK de Google GenAI y Python.
 
 ---
 
-## 📂 Estructura del Proyecto
-
-.
-├── main.py # Lógica principal y conexión con Gemini
-├── prompts.py # Instrucciones del sistema (System Prompt)
-├── .gitignore # Archivos excluidos de Git
-├── functions/ # Herramientas (Tools) del agente
-│ ├── call_function.py # Orquestador y despachador de funciones
-│ ├── get_files_info.py # Herramienta: Listar archivos
-│ ├── get_file_content.py# Herramienta: Leer archivos
-│ ├── write_file.py # Herramienta: Crear/Editar archivos
-│ └── run_python_file.py # Herramienta: Ejecutar Python
-└── calculator/ # El "Sandbox" (área de trabajo del agente)
-
----
-
 ## 🚀 Ejemplos de Uso
 
 Ejecuta el asistente pasando tu comando como argumento entre comillas:
