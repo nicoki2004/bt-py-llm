@@ -1,25 +1,21 @@
 import argparse
 import os
+import sys
 
 from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from config import MAX_ITERS
 from functions.call_function import available_functions, call_function
 from prompts import system_prompt
 
 
 def main():
-    """
-    Call Gemini with function calling support.
-    """
     parser = argparse.ArgumentParser(description="AI Code Assistant")
     parser.add_argument("user_prompt", type=str, help="Prompt to send to Gemini")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose output")
-
     args = parser.parse_args()
-
-    messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
 
     load_dotenv()
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -27,49 +23,61 @@ def main():
         raise RuntimeError("GEMINI_API_KEY environment variable not set")
 
     client = genai.Client(api_key=api_key)
+    messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)])]
+    if args.verbose:
+        print(f"User prompt: {args.user_prompt}\n")
+
+    for _ in range(MAX_ITERS):
+        try:
+            final_response = generate_content(client, messages, args.verbose)
+            if final_response:
+                print("Final response:")
+                print(final_response)
+                return
+        except Exception as e:
+            print(f"Error in generate_content: {e}")
+
+    print(f"Maximum iterations ({MAX_ITERS}) reached")
+    sys.exit(1)
+
+
+def generate_content(client, messages, verbose):
     response = client.models.generate_content(
-        # model="gemini-1.5-flash-002",
         model="gemini-2.5-flash",
         contents=messages,
         config=types.GenerateContentConfig(
-            system_instruction=system_prompt, temperature=0, tools=[available_functions]
+            tools=[available_functions], system_instruction=system_prompt
         ),
     )
     if not response.usage_metadata:
         raise RuntimeError("Gemini API response appears to be malformed")
 
-    if args.verbose:
-        print(f"User prompt: {args.user_prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+    if verbose:
+        print("Prompt tokens:", response.usage_metadata.prompt_token_count)
+        print("Response tokens:", response.usage_metadata.candidates_token_count)
 
-    print("Response:")
-    if response.function_calls:
-        function_results = []
+    if response.candidates:
+        for candidate in response.candidates:
+            if candidate.content:
+                messages.append(candidate.content)
 
-        for function_call in response.function_calls:
-            # 1. Ejecutar la función
-            function_call_result = call_function(function_call, verbose=args.verbose)
+    if not response.function_calls:
+        return response.text
 
-            # 2. Validaciones de seguridad de la estructura
-            if not function_call_result.parts:
-                raise RuntimeError("Function call result has no parts")
+    function_responses = []
+    for function_call in response.function_calls:
+        result = call_function(function_call, verbose)
+        if (
+            not result.parts
+            or not result.parts[0].function_response
+            or not result.parts[0].function_response.response
+        ):
+            raise RuntimeError(f"Empty function response for {function_call.name}")
+        if verbose:
+            print(f"-> {result.parts[0].function_response.response}")
+        function_responses.append(result.parts[0])
 
-            part = function_call_result.parts[0]
-            if not part.function_response:
-                raise RuntimeError("Part does not contain a function_response")
-
-            if part.function_response.response is None:
-                raise RuntimeError("FunctionResponse.response is None")
-
-            # 3. Guardar el resultado
-            function_results.append(part)
-
-            # 4. Feedback visual si es verbose
-            if args.verbose:
-                print(f"-> {part.function_response.response}")
-    else:
-        print(response.text)
+    messages.append(types.Content(role="user", parts=function_responses))
 
 
 if __name__ == "__main__":
